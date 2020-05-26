@@ -221,7 +221,6 @@ func (w *Worker) start(h handler) {
 				errFunc(err)
 			}
 		default:
-			time.Sleep(flushIntv)
 			err := func() error {
 				opt := &DequeueOptions{
 					Namespace:    ns,
