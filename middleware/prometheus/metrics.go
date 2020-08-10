@@ -71,11 +71,11 @@ func init() {
 
 // HandleFuncMetrics adds prometheus metrics like executed job count.
 func HandleFuncMetrics(f work.HandleFunc) work.HandleFunc {
-	return func(job *work.Job, opt *work.DequeueOptions) error {
+	return func(c work.ContextMap, job *work.Job, opt *work.DequeueOptions) error {
 		jobBusy.WithLabelValues(opt.Namespace, opt.QueueID).Inc()
 		defer jobBusy.WithLabelValues(opt.Namespace, opt.QueueID).Dec()
 		startTime := time.Now()
-		err := f(job, opt)
+		err := f(c, job, opt)
 		if err != nil {
 			jobExecutedTotal.WithLabelValues(opt.Namespace, opt.QueueID, "failure").Inc()
 			return err

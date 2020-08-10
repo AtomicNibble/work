@@ -21,7 +21,7 @@ func TestWorkerStartStop(t *testing.T) {
 		Queue:     NewRedisQueue(client),
 	})
 	err := w.Register("test",
-		func(*Job, *DequeueOptions) error { return nil },
+		func(ContextMap, *Job, *DequeueOptions) error { return nil },
 		&JobOptions{
 			MaxExecutionTime: time.Second,
 			IdleWait:         time.Second,
@@ -46,7 +46,7 @@ func TestWorkerExportMetrics(t *testing.T) {
 		Queue:     NewRedisQueue(client),
 	})
 	err := w.Register("test",
-		func(*Job, *DequeueOptions) error { return nil },
+		func(ContextMap, *Job, *DequeueOptions) error { return nil },
 		&JobOptions{
 			MaxExecutionTime: time.Second,
 			IdleWait:         time.Second,
@@ -105,7 +105,7 @@ func TestWorkerRunJobMultiQueue(t *testing.T) {
 		Queue:     NewRedisQueue(client),
 	})
 	err := w.Register("test1",
-		func(job *Job, _ *DequeueOptions) error {
+		func(c ContextMap, job *Job, _ *DequeueOptions) error {
 			var msg message
 			job.UnmarshalPayload(&msg)
 			if msg.Text != "test1" {
@@ -121,7 +121,7 @@ func TestWorkerRunJobMultiQueue(t *testing.T) {
 	)
 	require.NoError(t, err)
 	err = w.Register("test2",
-		func(job *Job, _ *DequeueOptions) error {
+		func(c ContextMap, job *Job, _ *DequeueOptions) error {
 			var msg message
 			job.UnmarshalPayload(&msg)
 			if msg.Text != "test2" {
@@ -195,7 +195,7 @@ func TestWorkerRunJob(t *testing.T) {
 		Queue:     NewRedisQueue(client),
 	})
 	err := w.Register("success",
-		func(*Job, *DequeueOptions) error { return nil },
+		func(ContextMap, *Job, *DequeueOptions) error { return nil },
 		&JobOptions{
 			MaxExecutionTime: time.Minute,
 			IdleWait:         time.Second,
@@ -204,7 +204,7 @@ func TestWorkerRunJob(t *testing.T) {
 	)
 	require.NoError(t, err)
 	err = w.Register("failure",
-		func(*Job, *DequeueOptions) error { return errors.New("no reason") },
+		func(ContextMap, *Job, *DequeueOptions) error { return errors.New("no reason") },
 		&JobOptions{
 			MaxExecutionTime: time.Minute,
 			IdleWait:         time.Second,
@@ -213,7 +213,7 @@ func TestWorkerRunJob(t *testing.T) {
 	)
 	require.NoError(t, err)
 	err = w.Register("panic",
-		func(*Job, *DequeueOptions) error {
+		func(ContextMap, *Job, *DequeueOptions) error {
 			panic("unexpected")
 		},
 		&JobOptions{
@@ -339,10 +339,10 @@ func TestRetry(t *testing.T) {
 		InvisibleSec: 10,
 	}
 	retrier := retry(NewRedisQueue(client))
-	h := retrier(func(*Job, *DequeueOptions) error {
+	h := retrier(func(ContextMap, *Job, *DequeueOptions) error {
 		return ErrUnrecoverable
 	})
-	err := h(job, opt)
+	err := h(ContextMap{}, job, opt)
 	require.NoError(t, err)
 
 	require.EqualValues(t, 0, job.Retries)
@@ -359,10 +359,10 @@ func TestRetry(t *testing.T) {
 	var delays []int64
 	for i := 1; i <= 10; i++ {
 		retryErr := fmt.Errorf("error %d", i)
-		h = retrier(func(*Job, *DequeueOptions) error {
+		h = retrier(func(ContextMap, *Job, *DequeueOptions) error {
 			return retryErr
 		})
-		err = h(job, opt)
+		err = h(ContextMap{}, job, opt)
 		require.Error(t, err)
 		require.Equal(t, retryErr, err)
 
@@ -401,13 +401,13 @@ func TestMaxRetry(t *testing.T) {
 	}
 	retrier := retry(NewRedisQueue(client))
 	retryErr := fmt.Errorf("error")
-	h := retrier(func(*Job, *DequeueOptions) error {
+	h := retrier(func(ContextMap, *Job, *DequeueOptions) error {
 		return retryErr
 	})
 	var err error
 	job.WithMaxRetries(5)
 	for i := 1; i <= 5; i++ {
-		err = h(job, opt)
+		err = h(ContextMap{}, job, opt)
 		require.Error(t, err)
 		require.Equal(t, retryErr, err)
 
@@ -424,7 +424,7 @@ func TestMaxRetry(t *testing.T) {
 		require.EqualValues(t, job.EnqueuedAt.Unix(), z[0].Score)
 	}
 
-	err = h(job, opt)
+	err = h(ContextMap{}, job, opt)
 	require.Error(t, err)
 	require.Equal(t, ErrUnrecoverable, err)
 }

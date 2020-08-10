@@ -13,10 +13,11 @@ func TestCatchPanic(t *testing.T) {
 		Namespace: "n1",
 		QueueID:   "q1",
 	}
-	h := CatchPanic(func(*work.Job, *work.DequeueOptions) error {
+	h := CatchPanic(func(work.ContextMap, *work.Job, *work.DequeueOptions) error {
 		panic("fatal error")
 	})
 
-	err := h(job, opt)
+	c := work.ContextMap{}
+	err := h(c, job, opt)
 	require.Error(t, err)
 }

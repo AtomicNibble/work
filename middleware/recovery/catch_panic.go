@@ -10,7 +10,7 @@ import (
 // CatchPanic catches a panic from handler.
 // It also adds runtime stack for debugging.
 func CatchPanic(f work.HandleFunc) work.HandleFunc {
-	return func(job *work.Job, opt *work.DequeueOptions) (err error) {
+	return func(c work.ContextMap, job *work.Job, opt *work.DequeueOptions) (err error) {
 		defer func() {
 			if r := recover(); r != nil {
 				const size = 4096
@@ -20,6 +20,6 @@ func CatchPanic(f work.HandleFunc) work.HandleFunc {
 				err = fmt.Errorf("panic: %v\n\n%s", r, stack)
 			}
 		}()
-		return f(job, opt)
+		return f(c, job, opt)
 	}
 }

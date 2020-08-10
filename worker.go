@@ -10,6 +10,9 @@ import (
 	"github.com/cenkalti/backoff/v4"
 )
 
+// ContextMap holds KvP
+type ContextMap map[string]interface{}
+
 // DequeueFunc generates a job.
 type DequeueFunc func(*DequeueOptions) (*Job, error)
 
@@ -23,7 +26,7 @@ type EnqueueFunc func(*Job, *EnqueueOptions) error
 type EnqueueMiddleware func(EnqueueFunc) EnqueueFunc
 
 // HandleFunc runs a job.
-type HandleFunc func(*Job, *DequeueOptions) error
+type HandleFunc func(ContextMap, *Job, *DequeueOptions) error
 
 // HandleMiddleware modifies HandleFunc hehavior.
 type HandleMiddleware func(HandleFunc) HandleFunc
@@ -232,7 +235,8 @@ func (w *Worker) start(h handler) {
 				if err != nil {
 					return err
 				}
-				err = handle(job, opt)
+				c := ContextMap{}
+				err = handle(c, job, opt)
 				if err != nil {
 					return err
 				}
@@ -341,20 +345,20 @@ func idleWait(d time.Duration, stop <-chan struct{}) DequeueMiddleware {
 }
 
 func catchPanic(f HandleFunc) HandleFunc {
-	return func(job *Job, opt *DequeueOptions) (err error) {
+	return func(c ContextMap, job *Job, opt *DequeueOptions) (err error) {
 		defer func() {
 			if r := recover(); r != nil {
 				err = fmt.Errorf("panic: %v\n\n%s", r, debug.Stack())
 			}
 		}()
-		return f(job, opt)
+		return f(c, job, opt)
 	}
 }
 
 func retry(queue Queue) HandleMiddleware {
 	return func(f HandleFunc) HandleFunc {
-		return func(job *Job, opt *DequeueOptions) error {
-			err := f(job, opt)
+		return func(c ContextMap, job *Job, opt *DequeueOptions) error {
+			err := f(c, job, opt)
 			if err != nil && err != ErrUnrecoverable {
 
 				if job.MaxRetries > 0 && job.Retries >= job.MaxRetries {

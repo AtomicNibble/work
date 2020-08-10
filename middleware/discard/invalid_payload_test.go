@@ -13,12 +13,12 @@ func TestInvalidPayload(t *testing.T) {
 		Namespace: "n1",
 		QueueID:   "q1",
 	}
-	h := InvalidPayload(func(*work.Job, *work.DequeueOptions) error {
+	h := InvalidPayload(func(work.ContextMap, *work.Job, *work.DequeueOptions) error {
 		var s string
 		return job.UnmarshalPayload(&s)
 	})
 
-	err := h(job, opt)
+	err := h(work.ContextMap{}, job, opt)
 	require.Error(t, err)
 	require.Equal(t, work.ErrUnrecoverable, err)
 }

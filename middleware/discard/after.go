@@ -9,8 +9,8 @@ import (
 // After discards a job if it is already stale.
 func After(d time.Duration) work.HandleMiddleware {
 	return func(f work.HandleFunc) work.HandleFunc {
-		return func(job *work.Job, opt *work.DequeueOptions) error {
-			err := f(job, opt)
+		return func(c work.ContextMap, job *work.Job, opt *work.DequeueOptions) error {
+			err := f(c, job, opt)
 			if err != nil {
 				if time.Now().Sub(job.CreatedAt) > d {
 					return work.ErrUnrecoverable

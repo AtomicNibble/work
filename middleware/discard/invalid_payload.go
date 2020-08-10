@@ -9,8 +9,8 @@ import (
 
 // InvalidPayload discards a job if it has decode error.
 func InvalidPayload(f work.HandleFunc) work.HandleFunc {
-	return func(job *work.Job, opt *work.DequeueOptions) error {
-		err := f(job, opt)
+	return func(c work.ContextMap, job *work.Job, opt *work.DequeueOptions) error {
+		err := f(c, job, opt)
 		if err != nil {
 			cerr := errors.Cause(err)
 			if strings.HasPrefix(cerr.Error(), "work: invalid job payload: ") {
