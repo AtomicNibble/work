@@ -126,7 +126,7 @@ func (q *redisQueue) BulkEnqueue(jobs []*Job, opt *EnqueueOptions) error {
 	if len(jobs) == 0 {
 		return nil
 	}
-	args := make([]interface{}, 2+3*len(jobs))
+	args := make([]interface{}, 2+(3*len(jobs)))
 	args[0] = opt.Namespace
 	args[1] = opt.QueueID
 	for i, job := range jobs {
