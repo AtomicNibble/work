@@ -338,7 +338,7 @@ func TestRetry(t *testing.T) {
 		QueueID:      "q1",
 		InvisibleSec: 10,
 	}
-	retrier := retry(NewRedisQueue(client))
+	retrier := Retry(NewRedisQueue(client))
 	h := retrier(func(ContextMap, *Job, *DequeueOptions) error {
 		return ErrUnrecoverable
 	})
@@ -399,7 +399,7 @@ func TestMaxRetry(t *testing.T) {
 		QueueID:      "q1",
 		InvisibleSec: 10,
 	}
-	retrier := retry(NewRedisQueue(client))
+	retrier := Retry(NewRedisQueue(client))
 	retryErr := fmt.Errorf("error")
 	h := retrier(func(ContextMap, *Job, *DequeueOptions) error {
 		return retryErr

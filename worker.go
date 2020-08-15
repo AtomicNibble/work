@@ -176,7 +176,7 @@ func (w *Worker) start(h handler) {
 		handle = mw(handle)
 	}
 	handle = catchPanic(handle)
-	handle = retry(queue)(handle)
+	handle = Retry(queue)(handle)
 
 	// prepare bulk ack flush
 	var ackJobs []*Job
@@ -355,7 +355,8 @@ func catchPanic(f HandleFunc) HandleFunc {
 	}
 }
 
-func retry(queue Queue) HandleMiddleware {
+// Retry will schedule jobs for retry if not ErrUnrecoverable
+func Retry(queue Queue) HandleMiddleware {
 	return func(f HandleFunc) HandleFunc {
 		return func(c ContextMap, job *Job, opt *DequeueOptions) error {
 			err := f(c, job, opt)
