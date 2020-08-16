@@ -360,11 +360,6 @@ func retry(queue Queue) HandleMiddleware {
 		return func(c ContextMap, job *Job, opt *DequeueOptions) error {
 			err := f(c, job, opt)
 			if err != nil && err != ErrUnrecoverable {
-
-				if job.MaxRetries > 0 && job.Retries >= job.MaxRetries {
-					return ErrUnrecoverable
-				}
-
 				now := time.Now()
 				job.Retries++
 				job.LastError = err.Error()
